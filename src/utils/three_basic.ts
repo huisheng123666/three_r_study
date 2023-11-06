@@ -11,8 +11,10 @@ import {
   TextureLoader,
   AmbientLight,
   HemisphereLight,
+  AxesHelper,
 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 let resizeTimer: number | null = null;
 
@@ -23,20 +25,21 @@ class Word {
   container?: HTMLElement;
   controls?: OrbitControls | null = null;
   clock?: Clock;
+  gltfLoader?: GLTFLoader | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
     this.camera = createCamera();
     this.scene = createScene();
     this.renderer = createRenderer();
-    container.appendChild(this.renderer.domElement);
-
+    this.container.appendChild(this.renderer.domElement);
+    this.gltfLoader = createGLTFLoader();
     // 灯光
     const { mainLight, ambientLight, hemisphereLight } = createLights();
 
-    const cube = createCube();
+    // const cube = createCube();
 
-    this.scene.add(mainLight, ambientLight, hemisphereLight, cube);
+    this.scene.add(mainLight, ambientLight, hemisphereLight);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
@@ -56,6 +59,8 @@ class Word {
       this.controls?.update();
 
       this.renderer?.render(this.scene!, this.camera!);
+
+      this.camera?.lookAt(0, 0, 0);
     });
   }
 
@@ -85,6 +90,20 @@ class Word {
     this.renderer?.dispose();
     this.controls?.dispose();
   }
+
+  addHelper() {
+    const axesHelper = new AxesHelper(10);
+    this.scene!.add(axesHelper);
+  }
+
+  loaderModel(
+    url: string,
+    onLoad: <T>(data: T) => void,
+    onProgress?: (event: ProgressEvent) => void,
+    onError?: (err: unknown) => void
+  ) {
+    this.gltfLoader?.load(url, onLoad, onProgress, onError);
+  }
 }
 
 function createScene() {
@@ -100,11 +119,11 @@ function createCamera() {
     35, // fov = Field Of View
     1, // aspect ratio (dummy value)
     0.1, // near clipping plane
-    100 // far clipping plane
+    1000 // far clipping plane
   );
 
   // move the camera back so we can view the scene
-  camera.position.set(0, 0, 10);
+  camera.position.set(100, 100, 100);
 
   return camera;
 }
@@ -152,6 +171,12 @@ function createLights() {
   const hemisphereLight = new HemisphereLight("green", "red", 5);
 
   return { ambientLight, mainLight, hemisphereLight };
+}
+
+function createGLTFLoader() {
+  const loader = new GLTFLoader();
+
+  return loader;
 }
 
 export { Word };
